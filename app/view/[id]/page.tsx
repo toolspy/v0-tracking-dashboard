@@ -65,12 +65,25 @@ function StatusLokasiBadge({ status, createdAt }: { status: string; createdAt: s
   )
 }
 
-// Blurred field component - shows solid color block with text overlay
+// Fake blurred text - shows realistic looking blurred text (not real data)
+function BlurredText({ width = 'w-32' }: { width?: string }) {
+  // Generate random fake text pattern
+  const fakeChars = '████████████████████████████████'
+  return (
+    <span className={`inline-block ${width} text-muted-foreground/60 blur-[6px] select-none pointer-events-none`}>
+      {fakeChars.slice(0, Math.floor(Math.random() * 10) + 8)}
+    </span>
+  )
+}
+
+// Blurred field component - shows label with blurred fake content
 function BlurredField({ label, width = 'w-32' }: { label: string; width?: string }) {
   return (
     <div>
       <Label className="text-muted-foreground text-xs">{label}</Label>
-      <div className={`mt-1 h-6 ${width} bg-gradient-to-r from-muted to-muted/80 rounded animate-pulse`} />
+      <div className="mt-1">
+        <BlurredText width={width} />
+      </div>
     </div>
   )
 }
@@ -80,7 +93,7 @@ function FakeMapPreview() {
   return (
     <div className="aspect-video bg-gradient-to-br from-emerald-100 via-sky-100 to-blue-200 rounded-lg overflow-hidden relative">
       {/* Fake map grid pattern */}
-      <svg className="absolute inset-0 w-full h-full opacity-30" xmlns="http://www.w3.org/2000/svg">
+      <svg className="absolute inset-0 w-full h-full opacity-30" xmlns="http://www.w3.org/2000/svg" preserveAspectRatio="xMidYMid slice">
         <defs>
           <pattern id="grid" width="40" height="40" patternUnits="userSpaceOnUse">
             <path d="M 40 0 L 0 0 0 40" fill="none" stroke="#94a3b8" strokeWidth="0.5"/>
@@ -90,7 +103,7 @@ function FakeMapPreview() {
       </svg>
       
       {/* Fake roads */}
-      <svg className="absolute inset-0 w-full h-full" xmlns="http://www.w3.org/2000/svg">
+      <svg className="absolute inset-0 w-full h-full" xmlns="http://www.w3.org/2000/svg" preserveAspectRatio="xMidYMid slice">
         <line x1="0" y1="50%" x2="100%" y2="50%" stroke="#cbd5e1" strokeWidth="8"/>
         <line x1="30%" y1="0" x2="70%" y2="100%" stroke="#cbd5e1" strokeWidth="6"/>
         <line x1="60%" y1="0" x2="40%" y2="100%" stroke="#e2e8f0" strokeWidth="4"/>
@@ -99,8 +112,8 @@ function FakeMapPreview() {
         <circle cx="50%" cy="50%" r="4" fill="#fff"/>
       </svg>
       
-      {/* Overlay gradient */}
-      <div className="absolute inset-0 bg-gradient-to-t from-background/20 to-transparent" />
+      {/* Full blur overlay to hide any sharp edges */}
+      <div className="absolute inset-0 backdrop-blur-[2px]" />
     </div>
   )
 }
@@ -122,21 +135,21 @@ function BlurredPreview() {
           </CardTitle>
         </CardHeader>
         <CardContent className="space-y-3 relative">
-          {/* Solid overlay - cannot be bypassed via inspect */}
-          <div className="absolute inset-0 bg-background/95 backdrop-blur-xl z-10 flex items-center justify-center">
-            <div className="text-center px-4">
-              <div className="w-10 h-10 rounded-full bg-muted flex items-center justify-center mx-auto mb-2">
-                <Lock className="h-5 w-5 text-muted-foreground" />
-              </div>
-              <p className="text-xs text-muted-foreground">Terkunci</p>
-            </div>
-          </div>
           {/* Placeholder content - no real data */}
           <BlurredField label="Nomor Target" width="w-40" />
           <Separator />
           <div className="grid grid-cols-2 gap-3">
             <BlurredField label="Status Link" width="w-16" />
             <BlurredField label="Status Lokasi" width="w-20" />
+          </div>
+          {/* Overlay with lock - semi-transparent to show blur effect */}
+          <div className="absolute inset-0 bg-background/70 backdrop-blur-sm z-10 flex items-center justify-center rounded-b-lg">
+            <div className="text-center px-4">
+              <div className="w-10 h-10 rounded-full bg-muted flex items-center justify-center mx-auto mb-2">
+                <Lock className="h-5 w-5 text-muted-foreground" />
+              </div>
+              <p className="text-xs text-muted-foreground">Data Terkunci</p>
+            </div>
           </div>
         </CardContent>
       </Card>
@@ -150,14 +163,6 @@ function BlurredPreview() {
           </CardTitle>
         </CardHeader>
         <CardContent className="space-y-3 relative">
-          <div className="absolute inset-0 bg-background/95 backdrop-blur-xl z-10 flex items-center justify-center">
-            <div className="text-center px-4">
-              <div className="w-10 h-10 rounded-full bg-muted flex items-center justify-center mx-auto mb-2">
-                <Lock className="h-5 w-5 text-muted-foreground" />
-              </div>
-              <p className="text-xs text-muted-foreground">Lokasi terkunci</p>
-            </div>
-          </div>
           <div className="grid grid-cols-2 gap-3">
             <BlurredField label="Latitude" width="w-24" />
             <BlurredField label="Longitude" width="w-28" />
@@ -168,6 +173,15 @@ function BlurredPreview() {
             <BlurredField label="Provinsi" width="w-28" />
           </div>
           <FakeMapPreview />
+          {/* Overlay with lock - semi-transparent to show blur effect */}
+          <div className="absolute inset-0 bg-background/70 backdrop-blur-sm z-10 flex items-center justify-center rounded-b-lg">
+            <div className="text-center px-4">
+              <div className="w-10 h-10 rounded-full bg-muted flex items-center justify-center mx-auto mb-2">
+                <Lock className="h-5 w-5 text-muted-foreground" />
+              </div>
+              <p className="text-xs text-muted-foreground">Lokasi Terkunci</p>
+            </div>
+          </div>
         </CardContent>
       </Card>
 
@@ -180,16 +194,17 @@ function BlurredPreview() {
           </CardTitle>
         </CardHeader>
         <CardContent className="space-y-3 relative">
-          <div className="absolute inset-0 bg-background/95 backdrop-blur-xl z-10 flex items-center justify-center">
+          <BlurredField label="IP Address" width="w-32" />
+          <BlurredField label="User Agent" width="w-full" />
+          {/* Overlay with lock - semi-transparent to show blur effect */}
+          <div className="absolute inset-0 bg-background/70 backdrop-blur-sm z-10 flex items-center justify-center rounded-b-lg">
             <div className="text-center px-4">
               <div className="w-10 h-10 rounded-full bg-muted flex items-center justify-center mx-auto mb-2">
                 <Lock className="h-5 w-5 text-muted-foreground" />
               </div>
-              <p className="text-xs text-muted-foreground">Data terkunci</p>
+              <p className="text-xs text-muted-foreground">Data Terkunci</p>
             </div>
           </div>
-          <BlurredField label="IP Address" width="w-32" />
-          <BlurredField label="User Agent" width="w-full" />
         </CardContent>
       </Card>
 
@@ -202,17 +217,18 @@ function BlurredPreview() {
           </CardTitle>
         </CardHeader>
         <CardContent className="relative">
-          <div className="absolute inset-0 bg-background/95 backdrop-blur-xl z-10 flex items-center justify-center">
+          <div className="grid grid-cols-2 gap-3">
+            <BlurredField label="Dibuat" width="w-36" />
+            <BlurredField label="Kadaluarsa" width="w-36" />
+          </div>
+          {/* Overlay with lock - semi-transparent to show blur effect */}
+          <div className="absolute inset-0 bg-background/70 backdrop-blur-sm z-10 flex items-center justify-center rounded-b-lg">
             <div className="text-center px-4">
               <div className="w-10 h-10 rounded-full bg-muted flex items-center justify-center mx-auto mb-2">
                 <Lock className="h-5 w-5 text-muted-foreground" />
               </div>
-              <p className="text-xs text-muted-foreground">Waktu terkunci</p>
+              <p className="text-xs text-muted-foreground">Waktu Terkunci</p>
             </div>
-          </div>
-          <div className="grid grid-cols-2 gap-3">
-            <BlurredField label="Dibuat" width="w-36" />
-            <BlurredField label="Kadaluarsa" width="w-36" />
           </div>
         </CardContent>
       </Card>
