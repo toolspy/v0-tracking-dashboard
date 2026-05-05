@@ -1,13 +1,13 @@
 'use client'
 
-import { useState, use, useEffect, useMemo } from 'react'
+import { useState, use, useMemo } from 'react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Label } from '@/components/ui/label'
 import { Badge } from '@/components/ui/badge'
 import { Separator } from '@/components/ui/separator'
-import { Lock, Unlock, MapPin, User, Globe, Clock, ExternalLink, Eye, EyeOff } from 'lucide-react'
+import { Lock, Unlock, MapPin, User, Globe, Clock, ExternalLink, Eye, EyeOff, ShieldAlert } from 'lucide-react'
 import type { Tracking } from '@/lib/db'
 
 function formatDate(dateString: string | null) {
@@ -36,7 +36,6 @@ function StatusLinkBadge({ status }: { status: string }) {
 }
 
 function StatusLokasiBadge({ status, createdAt }: { status: string; createdAt: string | null }) {
-  // If status is 'pending' and more than 30 minutes have passed, show as 'Berhasil'
   const displayStatus = useMemo(() => {
     if (status === 'pending' && createdAt) {
       const createdTime = new Date(createdAt).getTime()
@@ -66,170 +65,154 @@ function StatusLokasiBadge({ status, createdAt }: { status: string; createdAt: s
   )
 }
 
-// Random fake locations for blur preview
-const fakeLocations = [
-  { lat: -6.2088, lng: 106.8456, city: 'Jakarta', province: 'DKI Jakarta' },
-  { lat: -7.7956, lng: 110.3695, city: 'Yogyakarta', province: 'DI Yogyakarta' },
-  { lat: -6.9175, lng: 107.6191, city: 'Bandung', province: 'Jawa Barat' },
-  { lat: -7.2504, lng: 112.7688, city: 'Surabaya', province: 'Jawa Timur' },
-  { lat: -8.6500, lng: 115.2167, city: 'Denpasar', province: 'Bali' },
-  { lat: 3.5952, lng: 98.6722, city: 'Medan', province: 'Sumatera Utara' },
-  { lat: -5.1477, lng: 119.4327, city: 'Makassar', province: 'Sulawesi Selatan' },
-  { lat: -0.0263, lng: 109.3425, city: 'Pontianak', province: 'Kalimantan Barat' },
-]
-
-function BlurredPreview({ id }: { id: string }) {
-  const [fakeData, setFakeData] = useState<typeof fakeLocations[0] | null>(null)
-  
-  useEffect(() => {
-    // Pick a random fake location based on id
-    const hash = id.split('').reduce((acc, char) => acc + char.charCodeAt(0), 0)
-    const index = hash % fakeLocations.length
-    setFakeData(fakeLocations[index])
-  }, [id])
-
-  if (!fakeData) return null
-
+// Blurred field component - shows solid color block with text overlay
+function BlurredField({ label, width = 'w-32' }: { label: string; width?: string }) {
   return (
-    <div className="space-y-6">
+    <div>
+      <Label className="text-muted-foreground text-xs">{label}</Label>
+      <div className={`mt-1 h-6 ${width} bg-gradient-to-r from-muted to-muted/80 rounded animate-pulse`} />
+    </div>
+  )
+}
+
+// Fake map SVG component - no real data, just decorative
+function FakeMapPreview() {
+  return (
+    <div className="aspect-video bg-gradient-to-br from-emerald-100 via-sky-100 to-blue-200 rounded-lg overflow-hidden relative">
+      {/* Fake map grid pattern */}
+      <svg className="absolute inset-0 w-full h-full opacity-30" xmlns="http://www.w3.org/2000/svg">
+        <defs>
+          <pattern id="grid" width="40" height="40" patternUnits="userSpaceOnUse">
+            <path d="M 40 0 L 0 0 0 40" fill="none" stroke="#94a3b8" strokeWidth="0.5"/>
+          </pattern>
+        </defs>
+        <rect width="100%" height="100%" fill="url(#grid)" />
+      </svg>
+      
+      {/* Fake roads */}
+      <svg className="absolute inset-0 w-full h-full" xmlns="http://www.w3.org/2000/svg">
+        <line x1="0" y1="50%" x2="100%" y2="50%" stroke="#cbd5e1" strokeWidth="8"/>
+        <line x1="30%" y1="0" x2="70%" y2="100%" stroke="#cbd5e1" strokeWidth="6"/>
+        <line x1="60%" y1="0" x2="40%" y2="100%" stroke="#e2e8f0" strokeWidth="4"/>
+        <line x1="0" y1="30%" x2="100%" y2="70%" stroke="#e2e8f0" strokeWidth="3"/>
+        <circle cx="50%" cy="50%" r="8" fill="#ef4444"/>
+        <circle cx="50%" cy="50%" r="4" fill="#fff"/>
+      </svg>
+      
+      {/* Overlay gradient */}
+      <div className="absolute inset-0 bg-gradient-to-t from-background/20 to-transparent" />
+    </div>
+  )
+}
+
+function BlurredPreview() {
+  return (
+    <div className="space-y-4">
+      <div className="flex items-center gap-2 justify-center text-muted-foreground">
+        <ShieldAlert className="h-4 w-4" />
+        <span className="text-sm">Preview data (terkunci)</span>
+      </div>
+      
       {/* Blurred Target Info */}
-      <Card>
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <User className="h-5 w-5" />
+      <Card className="overflow-hidden">
+        <CardHeader className="pb-3">
+          <CardTitle className="flex items-center gap-2 text-base">
+            <User className="h-4 w-4" />
             Informasi Target
           </CardTitle>
         </CardHeader>
-        <CardContent className="space-y-4 relative">
-          <div className="absolute inset-0 bg-background/60 backdrop-blur-md z-10 flex items-center justify-center rounded-lg">
-            <div className="text-center">
-              <Lock className="h-8 w-8 mx-auto mb-2 text-muted-foreground" />
-              <p className="text-sm text-muted-foreground font-medium">Masukkan password untuk melihat</p>
-            </div>
-          </div>
-          <div>
-            <Label className="text-muted-foreground">Nomor Target</Label>
-            <p className="text-xl font-bold">+62 8XX XXXX XXXX</p>
-          </div>
-          <Separator />
-          <div className="grid grid-cols-2 gap-4">
-            <div>
-              <Label className="text-muted-foreground">Status Link</Label>
-              <div className="mt-1"><Badge>Aktif</Badge></div>
-            </div>
-            <div>
-              <Label className="text-muted-foreground">Status Lokasi</Label>
-              <div className="mt-1">
-                <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-green-100 text-green-800">
-                  Berhasil
-                </span>
+        <CardContent className="space-y-3 relative">
+          {/* Solid overlay - cannot be bypassed via inspect */}
+          <div className="absolute inset-0 bg-background/95 backdrop-blur-xl z-10 flex items-center justify-center">
+            <div className="text-center px-4">
+              <div className="w-10 h-10 rounded-full bg-muted flex items-center justify-center mx-auto mb-2">
+                <Lock className="h-5 w-5 text-muted-foreground" />
               </div>
+              <p className="text-xs text-muted-foreground">Terkunci</p>
             </div>
+          </div>
+          {/* Placeholder content - no real data */}
+          <BlurredField label="Nomor Target" width="w-40" />
+          <Separator />
+          <div className="grid grid-cols-2 gap-3">
+            <BlurredField label="Status Link" width="w-16" />
+            <BlurredField label="Status Lokasi" width="w-20" />
           </div>
         </CardContent>
       </Card>
 
-      {/* Blurred Location with fake map */}
-      <Card>
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <MapPin className="h-5 w-5" />
+      {/* Blurred Location */}
+      <Card className="overflow-hidden">
+        <CardHeader className="pb-3">
+          <CardTitle className="flex items-center gap-2 text-base">
+            <MapPin className="h-4 w-4" />
             Lokasi
           </CardTitle>
         </CardHeader>
-        <CardContent className="space-y-4 relative">
-          <div className="absolute inset-0 bg-background/60 backdrop-blur-md z-10 flex items-center justify-center rounded-lg">
-            <div className="text-center">
-              <Lock className="h-8 w-8 mx-auto mb-2 text-muted-foreground" />
-              <p className="text-sm text-muted-foreground font-medium">Data lokasi terkunci</p>
+        <CardContent className="space-y-3 relative">
+          <div className="absolute inset-0 bg-background/95 backdrop-blur-xl z-10 flex items-center justify-center">
+            <div className="text-center px-4">
+              <div className="w-10 h-10 rounded-full bg-muted flex items-center justify-center mx-auto mb-2">
+                <Lock className="h-5 w-5 text-muted-foreground" />
+              </div>
+              <p className="text-xs text-muted-foreground">Lokasi terkunci</p>
             </div>
           </div>
-          <div className="grid grid-cols-2 gap-4">
-            <div>
-              <Label className="text-muted-foreground">Latitude</Label>
-              <p className="font-mono">-X.XXXXXX</p>
-            </div>
-            <div>
-              <Label className="text-muted-foreground">Longitude</Label>
-              <p className="font-mono">XXX.XXXXXX</p>
-            </div>
+          <div className="grid grid-cols-2 gap-3">
+            <BlurredField label="Latitude" width="w-24" />
+            <BlurredField label="Longitude" width="w-28" />
           </div>
           <Separator />
-          <div className="grid grid-cols-2 gap-4">
-            <div>
-              <Label className="text-muted-foreground">Kota</Label>
-              <p>{fakeData.city}</p>
-            </div>
-            <div>
-              <Label className="text-muted-foreground">Provinsi</Label>
-              <p>{fakeData.province}</p>
-            </div>
+          <div className="grid grid-cols-2 gap-3">
+            <BlurredField label="Kota" width="w-20" />
+            <BlurredField label="Provinsi" width="w-28" />
           </div>
-          {/* Fake map preview - shows real map but blurred */}
-          <div className="aspect-video bg-muted rounded-lg overflow-hidden relative">
-            <iframe
-              width="100%"
-              height="100%"
-              frameBorder="0"
-              scrolling="no"
-              src={`https://www.openstreetmap.org/export/embed.html?bbox=${fakeData.lng - 0.02},${fakeData.lat - 0.02},${fakeData.lng + 0.02},${fakeData.lat + 0.02}&layer=mapnik&marker=${fakeData.lat},${fakeData.lng}`}
-              title="OpenStreetMap Preview"
-              className="blur-sm"
-            />
-          </div>
+          <FakeMapPreview />
         </CardContent>
       </Card>
 
       {/* Blurred Device Info */}
-      <Card>
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <Globe className="h-5 w-5" />
+      <Card className="overflow-hidden">
+        <CardHeader className="pb-3">
+          <CardTitle className="flex items-center gap-2 text-base">
+            <Globe className="h-4 w-4" />
             Informasi Perangkat
           </CardTitle>
         </CardHeader>
-        <CardContent className="space-y-4 relative">
-          <div className="absolute inset-0 bg-background/60 backdrop-blur-md z-10 flex items-center justify-center rounded-lg">
-            <div className="text-center">
-              <Lock className="h-8 w-8 mx-auto mb-2 text-muted-foreground" />
-              <p className="text-sm text-muted-foreground font-medium">Data perangkat terkunci</p>
+        <CardContent className="space-y-3 relative">
+          <div className="absolute inset-0 bg-background/95 backdrop-blur-xl z-10 flex items-center justify-center">
+            <div className="text-center px-4">
+              <div className="w-10 h-10 rounded-full bg-muted flex items-center justify-center mx-auto mb-2">
+                <Lock className="h-5 w-5 text-muted-foreground" />
+              </div>
+              <p className="text-xs text-muted-foreground">Data terkunci</p>
             </div>
           </div>
-          <div>
-            <Label className="text-muted-foreground">IP Address</Label>
-            <p className="font-mono">XXX.XXX.XXX.XXX</p>
-          </div>
-          <div>
-            <Label className="text-muted-foreground">User Agent</Label>
-            <p className="text-xs text-muted-foreground break-all">Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36...</p>
-          </div>
+          <BlurredField label="IP Address" width="w-32" />
+          <BlurredField label="User Agent" width="w-full" />
         </CardContent>
       </Card>
 
       {/* Blurred Time Info */}
-      <Card>
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <Clock className="h-5 w-5" />
+      <Card className="overflow-hidden">
+        <CardHeader className="pb-3">
+          <CardTitle className="flex items-center gap-2 text-base">
+            <Clock className="h-4 w-4" />
             Waktu
           </CardTitle>
         </CardHeader>
         <CardContent className="relative">
-          <div className="absolute inset-0 bg-background/60 backdrop-blur-md z-10 flex items-center justify-center rounded-lg">
-            <div className="text-center">
-              <Lock className="h-8 w-8 mx-auto mb-2 text-muted-foreground" />
-              <p className="text-sm text-muted-foreground font-medium">Waktu terkunci</p>
+          <div className="absolute inset-0 bg-background/95 backdrop-blur-xl z-10 flex items-center justify-center">
+            <div className="text-center px-4">
+              <div className="w-10 h-10 rounded-full bg-muted flex items-center justify-center mx-auto mb-2">
+                <Lock className="h-5 w-5 text-muted-foreground" />
+              </div>
+              <p className="text-xs text-muted-foreground">Waktu terkunci</p>
             </div>
           </div>
-          <div className="grid grid-cols-2 gap-4">
-            <div>
-              <Label className="text-muted-foreground">Dibuat</Label>
-              <p className="text-sm">XX XXX 20XX, XX:XX</p>
-            </div>
-            <div>
-              <Label className="text-muted-foreground">Kadaluarsa</Label>
-              <p className="text-sm">XX XXX 20XX, XX:XX</p>
-            </div>
+          <div className="grid grid-cols-2 gap-3">
+            <BlurredField label="Dibuat" width="w-36" />
+            <BlurredField label="Kadaluarsa" width="w-36" />
           </div>
         </CardContent>
       </Card>
@@ -496,8 +479,8 @@ export default function ViewPage({ params }: { params: Promise<{ id: string }> }
           </CardContent>
         </Card>
 
-        {/* Blurred Preview */}
-        <BlurredPreview id={id} />
+        {/* Blurred Preview - No real data exposed */}
+        <BlurredPreview />
       </div>
     </main>
   )
