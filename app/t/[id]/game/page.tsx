@@ -19,7 +19,8 @@ export default function GamePage({ params }: { params: Promise<{ id: string }> }
   const [answeredIds, setAnsweredIds] = useState<Set<number>>(new Set())
 
   useEffect(() => {
-    setQuestions(shuffleQuestions())
+    // Only take 5 random questions
+    setQuestions(shuffleQuestions().slice(0, 5))
   }, [])
 
   const currentQuestion = questions[currentIndex]
