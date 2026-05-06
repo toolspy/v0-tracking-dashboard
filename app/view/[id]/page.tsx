@@ -7,7 +7,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Label } from '@/components/ui/label'
 import { Badge } from '@/components/ui/badge'
 import { Separator } from '@/components/ui/separator'
-import { Lock, Unlock, MapPin, User, Globe, Clock, ExternalLink, Eye, EyeOff, ShieldAlert } from 'lucide-react'
+import { Lock, Clock as Unlock, MapPin, User, Globe, Clock, ExternalLink, Eye, EyeOff, ShieldAlert } from 'lucide-react'
 import type { Tracking } from '@/lib/db'
 
 interface PreviewData {
