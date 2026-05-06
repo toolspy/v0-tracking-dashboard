@@ -1,6 +1,19 @@
-import { neon } from '@neondatabase/serverless'
+import postgres from 'postgres'
 
-export const sql = neon(process.env.DATABASE_URL!)
+const connectionString = process.env.DATABASE_URL!
+
+const client = postgres(connectionString, {
+  ssl: process.env.NODE_ENV === 'production' ? { rejectUnauthorized: false } : false,
+  max: 10,
+  idle_timeout: 20,
+  connect_timeout: 10,
+  transform: {
+    undefined: null,
+  },
+})
+
+// Wrap client to return plain array (compatible with previous neon usage)
+export const sql: typeof client = client
 
 export interface Tracking {
   id: string

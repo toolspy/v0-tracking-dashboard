@@ -21,7 +21,7 @@ export async function GET() {
       ORDER BY created_at DESC
     `
 
-    const data = result as Tracking[]
+    const data = result as unknown as Tracking[]
 
     // Generate CSV
     const headers = ['ID', 'Nomor Target', 'IP', 'User Agent', 'Latitude', 'Longitude', 'City', 'Province', 'Country', 'Status Link', 'Status Lokasi', 'Created At']

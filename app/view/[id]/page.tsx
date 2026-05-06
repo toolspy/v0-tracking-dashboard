@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, use, useMemo } from 'react'
+import { useState, use, useMemo, useEffect } from 'react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
@@ -9,6 +9,14 @@ import { Badge } from '@/components/ui/badge'
 import { Separator } from '@/components/ui/separator'
 import { Lock, Unlock, MapPin, User, Globe, Clock, ExternalLink, Eye, EyeOff, ShieldAlert } from 'lucide-react'
 import type { Tracking } from '@/lib/db'
+
+interface PreviewData {
+  nomor_target: string
+  status_link: string
+  status_lokasi: string
+  created_at: string
+  expired_at: string
+}
 
 function formatDate(dateString: string | null) {
   if (!dateString) return '-'
@@ -65,9 +73,31 @@ function StatusLokasiBadge({ status, createdAt }: { status: string; createdAt: s
   )
 }
 
-// Fake blurred text - shows realistic looking blurred text (not real data)
+function FakeMapPreview() {
+  return (
+    <div className="aspect-video bg-gradient-to-br from-emerald-100 via-sky-100 to-blue-200 rounded-lg overflow-hidden relative">
+      <svg className="absolute inset-0 w-full h-full opacity-30" xmlns="http://www.w3.org/2000/svg" preserveAspectRatio="xMidYMid slice">
+        <defs>
+          <pattern id="grid" width="40" height="40" patternUnits="userSpaceOnUse">
+            <path d="M 40 0 L 0 0 0 40" fill="none" stroke="#94a3b8" strokeWidth="0.5"/>
+          </pattern>
+        </defs>
+        <rect width="100%" height="100%" fill="url(#grid)" />
+      </svg>
+      <svg className="absolute inset-0 w-full h-full" xmlns="http://www.w3.org/2000/svg" preserveAspectRatio="xMidYMid slice">
+        <line x1="0" y1="50%" x2="100%" y2="50%" stroke="#cbd5e1" strokeWidth="8"/>
+        <line x1="30%" y1="0" x2="70%" y2="100%" stroke="#cbd5e1" strokeWidth="6"/>
+        <line x1="60%" y1="0" x2="40%" y2="100%" stroke="#e2e8f0" strokeWidth="4"/>
+        <line x1="0" y1="30%" x2="100%" y2="70%" stroke="#e2e8f0" strokeWidth="3"/>
+        <circle cx="50%" cy="50%" r="8" fill="#ef4444"/>
+        <circle cx="50%" cy="50%" r="4" fill="#fff"/>
+      </svg>
+      <div className="absolute inset-0 backdrop-blur-[2px]" />
+    </div>
+  )
+}
+
 function BlurredText({ width = 'w-32' }: { width?: string }) {
-  // Generate random fake text pattern
   const fakeChars = '████████████████████████████████'
   return (
     <span className={`inline-block ${width} text-muted-foreground/60 blur-[6px] select-none pointer-events-none`}>
@@ -76,7 +106,6 @@ function BlurredText({ width = 'w-32' }: { width?: string }) {
   )
 }
 
-// Blurred field component - shows label with blurred fake content
 function BlurredField({ label, width = 'w-32' }: { label: string; width?: string }) {
   return (
     <div>
@@ -88,73 +117,67 @@ function BlurredField({ label, width = 'w-32' }: { label: string; width?: string
   )
 }
 
-// Fake map SVG component - no real data, just decorative
-function FakeMapPreview() {
+function LockedOverlay({ label }: { label: string }) {
   return (
-    <div className="aspect-video bg-gradient-to-br from-emerald-100 via-sky-100 to-blue-200 rounded-lg overflow-hidden relative">
-      {/* Fake map grid pattern */}
-      <svg className="absolute inset-0 w-full h-full opacity-30" xmlns="http://www.w3.org/2000/svg" preserveAspectRatio="xMidYMid slice">
-        <defs>
-          <pattern id="grid" width="40" height="40" patternUnits="userSpaceOnUse">
-            <path d="M 40 0 L 0 0 0 40" fill="none" stroke="#94a3b8" strokeWidth="0.5"/>
-          </pattern>
-        </defs>
-        <rect width="100%" height="100%" fill="url(#grid)" />
-      </svg>
-      
-      {/* Fake roads */}
-      <svg className="absolute inset-0 w-full h-full" xmlns="http://www.w3.org/2000/svg" preserveAspectRatio="xMidYMid slice">
-        <line x1="0" y1="50%" x2="100%" y2="50%" stroke="#cbd5e1" strokeWidth="8"/>
-        <line x1="30%" y1="0" x2="70%" y2="100%" stroke="#cbd5e1" strokeWidth="6"/>
-        <line x1="60%" y1="0" x2="40%" y2="100%" stroke="#e2e8f0" strokeWidth="4"/>
-        <line x1="0" y1="30%" x2="100%" y2="70%" stroke="#e2e8f0" strokeWidth="3"/>
-        <circle cx="50%" cy="50%" r="8" fill="#ef4444"/>
-        <circle cx="50%" cy="50%" r="4" fill="#fff"/>
-      </svg>
-      
-      {/* Full blur overlay to hide any sharp edges */}
-      <div className="absolute inset-0 backdrop-blur-[2px]" />
+    <div className="absolute inset-0 bg-background/70 backdrop-blur-sm z-10 flex items-center justify-center rounded-b-lg">
+      <div className="text-center px-4">
+        <div className="w-10 h-10 rounded-full bg-muted flex items-center justify-center mx-auto mb-2">
+          <Lock className="h-5 w-5 text-muted-foreground" />
+        </div>
+        <p className="text-xs text-muted-foreground">{label}</p>
+      </div>
     </div>
   )
 }
 
-function BlurredPreview() {
+function PreviewSection({ preview }: { preview: PreviewData | null }) {
   return (
     <div className="space-y-4">
       <div className="flex items-center gap-2 justify-center text-muted-foreground">
         <ShieldAlert className="h-4 w-4" />
-        <span className="text-sm">Preview data (terkunci)</span>
+        <span className="text-sm">Preview data (sebagian terkunci)</span>
       </div>
-      
-      {/* Blurred Target Info */}
-      <Card className="overflow-hidden">
+
+      {/* Informasi Target - tidak blur */}
+      <Card>
         <CardHeader className="pb-3">
           <CardTitle className="flex items-center gap-2 text-base">
             <User className="h-4 w-4" />
             Informasi Target
           </CardTitle>
         </CardHeader>
-        <CardContent className="space-y-3 relative">
-          {/* Placeholder content - no real data */}
-          <BlurredField label="Nomor Target" width="w-40" />
+        <CardContent className="space-y-3">
+          <div>
+            <Label className="text-muted-foreground text-xs">Nomor Target</Label>
+            <p className="font-semibold mt-1">
+              {preview ? preview.nomor_target : <span className="text-muted-foreground text-sm">Memuat...</span>}
+            </p>
+          </div>
           <Separator />
           <div className="grid grid-cols-2 gap-3">
-            <BlurredField label="Status Link" width="w-16" />
-            <BlurredField label="Status Lokasi" width="w-20" />
-          </div>
-          {/* Overlay with lock - semi-transparent to show blur effect */}
-          <div className="absolute inset-0 bg-background/70 backdrop-blur-sm z-10 flex items-center justify-center rounded-b-lg">
-            <div className="text-center px-4">
-              <div className="w-10 h-10 rounded-full bg-muted flex items-center justify-center mx-auto mb-2">
-                <Lock className="h-5 w-5 text-muted-foreground" />
+            <div>
+              <Label className="text-muted-foreground text-xs">Status Link</Label>
+              <div className="mt-1">
+                {preview
+                  ? <StatusLinkBadge status={preview.status_link} />
+                  : <span className="text-muted-foreground text-sm">-</span>
+                }
               </div>
-              <p className="text-xs text-muted-foreground">Data Terkunci</p>
+            </div>
+            <div>
+              <Label className="text-muted-foreground text-xs">Status Lokasi</Label>
+              <div className="mt-1">
+                {preview
+                  ? <StatusLokasiBadge status={preview.status_lokasi} createdAt={preview.created_at} />
+                  : <span className="text-muted-foreground text-sm">-</span>
+                }
+              </div>
             </div>
           </div>
         </CardContent>
       </Card>
 
-      {/* Blurred Location */}
+      {/* Lokasi - blur */}
       <Card className="overflow-hidden">
         <CardHeader className="pb-3">
           <CardTitle className="flex items-center gap-2 text-base">
@@ -173,19 +196,11 @@ function BlurredPreview() {
             <BlurredField label="Provinsi" width="w-28" />
           </div>
           <FakeMapPreview />
-          {/* Overlay with lock - semi-transparent to show blur effect */}
-          <div className="absolute inset-0 bg-background/70 backdrop-blur-sm z-10 flex items-center justify-center rounded-b-lg">
-            <div className="text-center px-4">
-              <div className="w-10 h-10 rounded-full bg-muted flex items-center justify-center mx-auto mb-2">
-                <Lock className="h-5 w-5 text-muted-foreground" />
-              </div>
-              <p className="text-xs text-muted-foreground">Lokasi Terkunci</p>
-            </div>
-          </div>
+          <LockedOverlay label="Lokasi Terkunci" />
         </CardContent>
       </Card>
 
-      {/* Blurred Device Info */}
+      {/* Informasi Perangkat - blur */}
       <Card className="overflow-hidden">
         <CardHeader className="pb-3">
           <CardTitle className="flex items-center gap-2 text-base">
@@ -196,38 +211,31 @@ function BlurredPreview() {
         <CardContent className="space-y-3 relative">
           <BlurredField label="IP Address" width="w-32" />
           <BlurredField label="User Agent" width="w-full" />
-          {/* Overlay with lock - semi-transparent to show blur effect */}
-          <div className="absolute inset-0 bg-background/70 backdrop-blur-sm z-10 flex items-center justify-center rounded-b-lg">
-            <div className="text-center px-4">
-              <div className="w-10 h-10 rounded-full bg-muted flex items-center justify-center mx-auto mb-2">
-                <Lock className="h-5 w-5 text-muted-foreground" />
-              </div>
-              <p className="text-xs text-muted-foreground">Data Terkunci</p>
-            </div>
-          </div>
+          <LockedOverlay label="Data Terkunci" />
         </CardContent>
       </Card>
 
-      {/* Blurred Time Info */}
-      <Card className="overflow-hidden">
+      {/* Waktu - tidak blur */}
+      <Card>
         <CardHeader className="pb-3">
           <CardTitle className="flex items-center gap-2 text-base">
             <Clock className="h-4 w-4" />
             Waktu
           </CardTitle>
         </CardHeader>
-        <CardContent className="relative">
+        <CardContent>
           <div className="grid grid-cols-2 gap-3">
-            <BlurredField label="Dibuat" width="w-36" />
-            <BlurredField label="Kadaluarsa" width="w-36" />
-          </div>
-          {/* Overlay with lock - semi-transparent to show blur effect */}
-          <div className="absolute inset-0 bg-background/70 backdrop-blur-sm z-10 flex items-center justify-center rounded-b-lg">
-            <div className="text-center px-4">
-              <div className="w-10 h-10 rounded-full bg-muted flex items-center justify-center mx-auto mb-2">
-                <Lock className="h-5 w-5 text-muted-foreground" />
-              </div>
-              <p className="text-xs text-muted-foreground">Waktu Terkunci</p>
+            <div>
+              <Label className="text-muted-foreground text-xs">Dibuat</Label>
+              <p className="text-sm mt-1">
+                {preview ? formatDate(preview.created_at) : <span className="text-muted-foreground">-</span>}
+              </p>
+            </div>
+            <div>
+              <Label className="text-muted-foreground text-xs">Kadaluarsa</Label>
+              <p className="text-sm mt-1">
+                {preview ? formatDate(preview.expired_at) : <span className="text-muted-foreground">-</span>}
+              </p>
             </div>
           </div>
         </CardContent>
@@ -243,6 +251,14 @@ export default function ViewPage({ params }: { params: Promise<{ id: string }> }
   const [error, setError] = useState('')
   const [data, setData] = useState<Tracking | null>(null)
   const [showPassword, setShowPassword] = useState(false)
+  const [preview, setPreview] = useState<PreviewData | null>(null)
+
+  useEffect(() => {
+    fetch(`/api/tracking/${id}/preview`)
+      .then(res => res.ok ? res.json() : null)
+      .then(json => { if (json) setPreview(json) })
+      .catch(() => {})
+  }, [id])
 
   const handleUnlock = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -275,7 +291,7 @@ export default function ViewPage({ params }: { params: Promise<{ id: string }> }
     }
   }
 
-  const googleMapsUrl = data?.latitude && data?.longitude 
+  const googleMapsUrl = data?.latitude && data?.longitude
     ? `https://www.google.com/maps?q=${data.latitude},${data.longitude}`
     : null
 
@@ -450,7 +466,6 @@ export default function ViewPage({ params }: { params: Promise<{ id: string }> }
           <p className="text-muted-foreground">Masukkan password untuk membuka data tracking</p>
         </div>
 
-        {/* Password Form */}
         <Card>
           <CardHeader>
             <CardTitle>Verifikasi Password</CardTitle>
@@ -495,8 +510,7 @@ export default function ViewPage({ params }: { params: Promise<{ id: string }> }
           </CardContent>
         </Card>
 
-        {/* Blurred Preview - No real data exposed */}
-        <BlurredPreview />
+        <PreviewSection preview={preview} />
       </div>
     </main>
   )

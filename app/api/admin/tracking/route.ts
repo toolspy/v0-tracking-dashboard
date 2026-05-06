@@ -21,7 +21,7 @@ export async function GET() {
       ORDER BY created_at DESC
     `
 
-    return NextResponse.json({ data: result as Tracking[] })
+    return NextResponse.json({ data: result as unknown as Tracking[] })
   } catch (error) {
     console.error('Error fetching tracking list:', error)
     return NextResponse.json(
