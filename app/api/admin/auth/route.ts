@@ -19,13 +19,15 @@ export async function POST(request: Request) {
       httpOnly: true,
       secure: process.env.NODE_ENV === 'production',
       sameSite: 'lax',
+      path: '/',
       maxAge: 60 * 60 * 24 // 24 hours
     })
 
-    return NextResponse.json({ success: true })
-  } catch {
+    return NextResponse.json({ success: true, message: 'Login berhasil' })
+  } catch (error) {
+    console.error('Auth error:', error)
     return NextResponse.json(
-      { error: 'Terjadi kesalahan' },
+      { error: 'Terjadi kesalahan saat login' },
       { status: 500 }
     )
   }

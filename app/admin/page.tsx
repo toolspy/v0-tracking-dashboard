@@ -28,16 +28,21 @@ export default function AdminLoginPage() {
       const res = await fetch('/api/admin/auth', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ password })
+        body: JSON.stringify({ password }),
+        credentials: 'include'
       })
 
+      const data = await res.json()
+
       if (!res.ok) {
-        const data = await res.json()
         throw new Error(data.error || 'Login gagal')
       }
 
+      // Small delay to ensure cookie is set
+      await new Promise(resolve => setTimeout(resolve, 100))
       router.push('/admin/dashboard')
     } catch (err) {
+      console.error('Login error:', err)
       setError(err instanceof Error ? err.message : 'Terjadi kesalahan')
     } finally {
       setLoading(false)
