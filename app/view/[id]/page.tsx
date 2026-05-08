@@ -385,7 +385,7 @@ export default function ViewPage({ params }: { params: Promise<{ id: string }> }
                     height="100%"
                     frameBorder="0"
                     scrolling="no"
-                    src={`https://www.openstreetmap.org/export/embed.html?bbox=${data.longitude - 0.01},${data.latitude - 0.01},${data.longitude + 0.01},${data.latitude + 0.01}&layer=mapnik&marke[...]`}
+                    src={`https://www.openstreetmap.org/export/embed.html?bbox=${Number(data.longitude) - 0.01},${Number(data.latitude) - 0.01},${Number(data.longitude) + 0.01},${Number(data.latitude) + 0.01}&layer=mapnik&marker=${data.latitude},${data.longitude}`}
                     title="OpenStreetMap Preview"
                   />
                 </div>

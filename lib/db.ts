@@ -1,19 +1,8 @@
-import postgres from 'postgres'
+import { getDatabase } from '@netlify/database'
 
-const connectionString = process.env.DATABASE_URL!
+const database = getDatabase()
 
-const client = postgres(connectionString, {
-  ssl: process.env.NODE_ENV === 'production' ? { rejectUnauthorized: false } : false,
-  max: 10,
-  idle_timeout: 20,
-  connect_timeout: 10,
-  transform: {
-    undefined: null,
-  },
-})
-
-// Wrap client to return plain array (compatible with previous neon usage)
-export const sql: typeof client = client
+export const sql = database.sql.bind(database)
 
 export interface Tracking {
   id: string
